@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Job Finder & Tracker</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#111827;font-size:14px;line-height:1.6}
+header{background:#1a3260;padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hdr-title{color:#fff;font-size:15px;font-weight:600}
+.hdr-sub{color:rgba(255,255,255,.55);font-size:12px;margin-left:auto}
+main{max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+.tabs{display:flex;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.tab{flex:1;padding:12px 16px;text-align:center;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;border-right:1px solid #e5e7eb;transition:.15s}
+.tab:last-child{border-right:none}
+.tab.active{background:#eff6ff;color:#2563eb}
+.tab:hover:not(.active){background:#f8fafc}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:1.25rem;overflow:hidden}
+.card-hdr{padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb;background:#f8fafc}
+.card-hdr h2{font-size:15px;font-weight:600}
+.card-hdr p{font-size:12px;color:#6b7280;margin-top:2px}
+.card-body{padding:1.5rem}
+
+/* QUICK SEARCH TAB */
+.search-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.portal-card{border:1px solid #e5e7eb;border-radius:10px;padding:1rem;background:#fafafa;transition:.15s}
+.portal-card:hover{border-color:#93c5fd;background:#fff}
+.portal-name{font-weight:700;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.portal-dot{width:8px;height:8px;border-radius:50%}
+.search-row{display:flex;gap:6px;margin-bottom:8px}
+.search-row input,.search-row select{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.go-btn{background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:4px}
+.go-btn:hover{background:#1d4ed8}
+
+.quick-bar{display:flex;gap:10px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:1rem 1.25rem}
+.quick-bar input{flex:1;min-width:180px;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.quick-bar select{padding:9px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.open-all-btn{background:#16a34a;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.open-all-btn:hover{background:#15803d}
+
+/* PASTE & SCORE TAB */
+textarea#job-paste{width:100%;min-height:160px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical}
+.paste-hint{font-size:12px;color:#6b7280;margin-top:6px;line-height:1.5}
+.btn-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.btn-primary{background:#1a3260;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:transparent;border:1px solid #d1d5db;color:#374151;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-secondary:hover{background:#f8fafc}
+
+.job-list{margin-top:1.5rem;display:flex;flex-direction:column;gap:10px}
+.job-item{border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;background:#fff;display:flex;gap:14px;align-items:flex-start}
+.score-badge{flex-shrink:0;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff}
+.score-high{background:#16a34a}
+.score-mid{background:#d97706}
+.score-low{background:#dc2626}
+.job-info{flex:1;min-width:0}
+.job-title{font-weight:700;font-size:14.5px;color:#111827}
+.job-company{font-size:13px;color:#374151;margin-top:1px}
+.job-reason{font-size:12px;color:#6b7280;margin-top:5px}
+.job-missing{font-size:12px;color:#b45309;margin-top:3px}
+.job-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.mini-btn{font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;cursor:pointer;white-space:nowrap}
+.mini-btn:hover{background:#f8fafc}
+.mini-btn.applied{background:#dcfce7;border-color:#86efac;color:#15803d}
+
+/* TRACKER TAB */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1a3260;color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:10px 12px;border-bottom:1px solid #e5e7eb}
+tbody tr:nth-child(even){background:#f8fafc}
+tbody tr:hover{background:#eff6ff}
+.status-pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-Applied{background:#dcfce7;color:#15803d}
+.status-Shortlisted{background:#dbeafe;color:#1d4ed8}
+.status-Interview{background:#fef3c7;color:#92400e}
+.status-Rejected{background:#fee2e2;color:#b91c1c}
+.status-Saved{background:#f1f5f9;color:#475569}
+.tracker-toolbar{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.tracker-toolbar input{flex:1;min-width:180px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.stat-row{display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap}
+.stat-box{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 16px;min-width:100px}
+.stat-box .sl{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em}
+.stat-box .sv{font-size:20px;font-weight:700;color:#1a3260}
+.empty-msg{text-align:center;padding:3rem;color:#9ca3af;font-size:13px}
+select.status-select{padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px}
+.del-btn{background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px}
+footer{text-align:center;padding:1.5rem;color:#9ca3af;font-size:12px}
+
+/* KEYWORD CHECKER */
+.kw-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.kw-grid{grid-template-columns:1fr}}
+.kw-col label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px}
+.kw-col textarea{width:100%;min-height:180px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical}
+.match-meter{height:10px;border-radius:20px;background:#e5e7eb;overflow:hidden;margin:10px 0}
+.match-meter-fill{height:100%;transition:width .3s;border-radius:20px}
+.match-pct-label{font-size:28px;font-weight:700;color:#1a3260}
+.kw-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;margin:3px 4px 3px 0}
+.kw-found{background:#dcfce7;color:#15803d}
+.kw-missing{background:#fee2e2;color:#b91c1c}
+
+/* CHECKLIST */
+.streak-row{display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap}
+.goal-bar-wrap{background:#e5e7eb;border-radius:20px;height:22px;overflow:hidden;position:relative;margin:10px 0}
+.goal-bar-fill{height:100%;background:#16a34a;transition:width .3s;border-radius:20px}
+.goal-bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#111}
+.checklist-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.checklist-row input[type=checkbox]{width:18px;height:18px}
+.day-log-table th,.day-log-table td{font-size:12px}
+.add-app-row{display:flex;gap:8px;margin-bottom:1rem}
+.add-app-row input{flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+
+/* COVER LETTER */
+.cl-output{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:1rem 1.25rem;font-size:13.5px;line-height:1.7;white-space:pre-wrap;margin-top:1rem}
+.cl-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.cl-field-row input{padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+
+/* SALARY CALC */
+.sal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.sal-grid{grid-template-columns:1fr}}
+.sal-field{margin-bottom:12px}
+.sal-field label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px}
+.sal-field input,.sal-field select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+.sal-result-card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin-bottom:10px}
+.sal-result-card h3{font-size:13px;margin-bottom:8px;color:#1a3260}
+.sal-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.sal-row.total{font-weight:700;border-top:1px solid #e5e7eb;margin-top:4px;padding-top:8px}
+.sal-compare-better{color:#15803d;font-weight:600}
+.sal-compare-worse{color:#b91c1c;font-weight:600}
+
+/* AUTOCOMPLETE DROPDOWN */
+.ac-wrap { position: relative; flex: 1; min-width: 180px; }
+.ac-wrap input { width: 100%; }
+.ac-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 999;
+  max-height: 220px; overflow-y: auto; display: none;
+}
+.ac-dropdown.open { display: block; }
+.ac-item {
+  padding: 9px 14px; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; color: #111827;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.active { background: #eff6ff; color: #2563eb; }
+.ac-item .ac-icon { font-size: 11px; opacity: .5; flex-shrink: 0; }
+.ac-highlight { font-weight: 700; color: #2563eb; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="hdr-title">Universal Job Finder &amp; Tracker</span>
+  <span class="hdr-sub">Search · Score · Track · Apply</span>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="search">Quick search links</div>
+    <div class="tab" data-tab="paste">Paste &amp; score jobs</div>
+    <div class="tab" data-tab="tracker">My tracker</div>
+    <div class="tab" data-tab="keyword">Resume checker</div>
+    <div class="tab" data-tab="checklist">Daily checklist</div>
+    <div class="tab" data-tab="cover">Cover letter</div>
+    <div class="tab" data-tab="salary">Salary calculator</div>
+  </div>
+
+  <!-- ══════════ TAB 1: QUICK SEARCH ══════════ -->
+  <div class="panel active" id="panel-search">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Search across portals</h2>
+        <p>Type a keyword once — opens pre-filled search on every portal in a new tab</p>
+      </div>
+      <div class="card-body">
+        <div class="quick-bar">
+          <div class="ac-wrap">
+            <input type="text" id="quick-keyword" placeholder="Job title e.g. Software Engineer, Teacher, Nurse, HR Manager"
+              autocomplete="off" oninput="acSuggest(this,'ac-qkw','JOB_TITLES')" onkeydown="acKeydown(event,'ac-qkw')" onblur="acBlur('ac-qkw')">
+            <div class="ac-dropdown" id="ac-qkw"></div>
+          </div>
+          <div class="ac-wrap">
+            <input type="text" id="quick-location" placeholder="City or Remote"
+              autocomplete="off" oninput="acSuggest(this,'ac-qloc','LOCATIONS')" onkeydown="acKeydown(event,'ac-qloc')" onblur="acBlur('ac-qloc')">
+            <div class="ac-dropdown" id="ac-qloc"></div>
+          </div>
+          <button class="open-all-btn" onclick="openAllPortals()">Open all portals ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-grid" id="portal-grid"></div>
+  </div>
+
+  <!-- ══════════ TAB 2: PASTE & SCORE ══════════ -->
+  <div class="panel" id="panel-paste">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Paste job listings to score them</h2>
+        <p>Copy job titles/descriptions from Naukri, LinkedIn etc. and paste below — one job per line, or paste a whole block</p>
+      </div>
+      <div class="card-body">
+        <textarea id="job-paste" placeholder="Example:
+Data Analyst | Embarkgcc Services | Bengaluru | 2-6 years | Power BI, SQL, DAX, Power Query, ETL, Data Modeling
+
+BI Analyst | TechCorp | Mumbai | 1-3 years | Power BI, Tableau, SQL, Excel
+
+SEO Executive | Digital Agency | Remote | 0-2 years | SEO, Google Search Console, Content Marketing"></textarea>
+        <p class="paste-hint">Tip: include title, company, location, experience and a few skills per job for the best scoring. One job per line works best, but paragraphs are fine too.</p>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="scoreJobs()">Score these jobs</button>
+          <button class="btn-secondary" onclick="document.getElementById('job-paste').value=''">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="scored-results"></div>
+  </div>
+
+  <!-- ══════════ TAB 3: TRACKER ══════════ -->
+  <div class="panel" id="panel-tracker">
+    <div class="stat-row" id="tracker-stats"></div>
+    <div class="tracker-toolbar">
+      <input type="text" id="tracker-search" placeholder="Search your tracked jobs…" oninput="renderTracker()">
+      <button class="btn-secondary" onclick="exportTrackerCSV()">Export CSV ↓</button>
+      <button class="btn-secondary" onclick="clearTracker()">Clear all</button>
+    </div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Job title</th><th>Company</th><th>Location</th>
+              <th>Match</th><th>Status</th><th>Link</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tracker-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- ══════════ TAB 4: RESUME KEYWORD CHECKER ══════════ -->
+  <div class="panel" id="panel-keyword">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Resume keyword checker</h2>
+        <p>Paste a job description — see your match score and exactly which keywords are missing</p>
+      </div>
+      <div class="card-body">
+        <div class="kw-grid">
+          <div class="kw-col">
+            <label>Your skills / resume keywords</label>
+            <textarea id="kw-resume" placeholder="Paste your skills, tools, and experience keywords here...&#10;&#10;Example: Python, SQL, Excel, Communication, Project Management, Team Leadership, Tally, AutoCAD..."></textarea>
+          </div>
+          <div class="kw-col">
+            <label>Paste job description here</label>
+            <textarea id="kw-jd" placeholder="Paste the full job description text here..."></textarea>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="checkKeywords()">Check match</button>
+          <button class="btn-secondary" onclick="document.getElementById('kw-jd').value=''">Clear JD</button>
+        </div>
+        <div id="kw-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 5: DAILY CHECKLIST ══════════ -->
+  <div class="panel" id="panel-checklist">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Daily application goal</h2>
+        <p>Track how many jobs you've applied to today — aim for at least 10/day</p>
+      </div>
+      <div class="card-body">
+        <div class="streak-row" id="checklist-stats"></div>
+        <div class="goal-bar-wrap">
+          <div class="goal-bar-fill" id="goal-bar-fill" style="width:0%"></div>
+          <div class="goal-bar-text" id="goal-bar-text">0 / 10 today</div>
+        </div>
+        <div class="add-app-row">
+          <input type="text" id="quick-add-job" placeholder="Job title applied to (e.g. Data Analyst @ TCS)">
+          <button class="btn-primary" onclick="quickAddApplication()">+ Log application</button>
+        </div>
+        <div id="today-log"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><h2>Last 7 days</h2></div>
+      <div class="card-body">
+        <table class="day-log-table">
+          <thead><tr><th>Date</th><th>Applications</th><th>Goal met?</th></tr></thead>
+          <tbody id="week-log-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 6: COVER LETTER GENERATOR ══════════ -->
+  <div class="panel" id="panel-cover">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Cover letter generator</h2>
+        <p>Fill in the job details — generates a ready-to-send draft using your profile</p>
+      </div>
+      <div class="card-body">
+        <div class="cl-field-row">
+          <input type="text" id="cl-yourname" placeholder="Your full name">
+          <input type="text" id="cl-email" placeholder="Your email">
+        </div>
+        <div class="cl-field-row">
+          <input type="text" id="cl-phone" placeholder="Your phone number">
+          <input type="text" id="cl-exp" placeholder="Years of experience (e.g. 2)">
+        </div>
+        <div class="cl-field-row">
+          <input type="text" id="cl-currentrole" placeholder="Your current/latest role (e.g. Data Analyst)">
+          <input type="text" id="cl-topskills" placeholder="Your top 4-5 skills (e.g. SQL, Power BI, Excel)">
+        </div>
+        <div class="cl-field-row">
+          <input type="text" id="cl-jobtitle" placeholder="Job title applying for">
+          <input type="text" id="cl-company" placeholder="Company name">
+        </div>
+        <div class="cl-field-row">
+          <input type="text" id="cl-hrname" placeholder="HR name (optional — defaults to Hiring Manager)">
+          <input type="text" id="cl-source" placeholder="Where you found it (e.g. LinkedIn, Naukri)">
+        </div>
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Paste job description (optional — improves keyword matching)</label>
+        <textarea id="cl-jd" style="width:100%;min-height:100px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit"></textarea>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="generateCoverLetter()">Generate cover letter</button>
+          <button class="btn-secondary" onclick="copyCoverLetter()">Copy to clipboard</button>
+        </div>
+        <div class="cl-output" id="cl-output" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 7: SALARY CALCULATOR ══════════ -->
+  <div class="panel" id="panel-salary">
+    <div class="card">
+      <div class="card-hdr">
+        <h2>Salary / CTC calculator</h2>
+        <p>Estimate in-hand salary from a CTC offer, and compare two offers side by side</p>
+      </div>
+      <div class="card-body">
+        <div class="sal-grid">
+          <div>
+            <h3 style="font-size:13px;margin-bottom:10px;color:#1a3260">Offer A</h3>
+            <div class="sal-field"><label>Annual CTC (₹)</label><input type="number" id="sal-a-ctc" value="500000" oninput="calcSalary()"></div>
+            <div class="sal-field"><label>Bonus / Variable (₹, annual)</label><input type="number" id="sal-a-bonus" value="0" oninput="calcSalary()"></div>
+            <div class="sal-field"><label>Basic salary %</label><input type="number" id="sal-a-basic" value="40" oninput="calcSalary()"></div>
+          </div>
+          <div>
+            <h3 style="font-size:13px;margin-bottom:10px;color:#1a3260">Offer B (optional, for comparison)</h3>
+            <div class="sal-field"><label>Annual CTC (₹)</label><input type="number" id="sal-b-ctc" value="0" oninput="calcSalary()"></div>
+            <div class="sal-field"><label>Bonus / Variable (₹, annual)</label><input type="number" id="sal-b-bonus" value="0" oninput="calcSalary()"></div>
+            <div class="sal-field"><label>Basic salary %</label><input type="number" id="sal-b-basic" value="40" oninput="calcSalary()"></div>
+          </div>
+        </div>
+        <div id="sal-results"></div>
+        <p style="font-size:11px;color:#9ca3af;margin-top:8px">Estimate only — actual in-hand depends on company PF policy, professional tax slab (state-specific), and tax regime chosen. Not financial advice.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Universal Job Finder &amp; Tracker · Works for any job, any field · All data stored locally in your browser</footer>
+
+<script>
+/* ═══════════════════════════════════════
+   YOUR PROFILE — used for scoring
+   ═══════════════════════════════════════ */
+// SKILL_WEIGHTS is built dynamically from user's pasted skills (see buildSkillWeights)
+let SKILL_WEIGHTS = {};
+
+function buildSkillWeights(skillText) {
+  const weights = {};
+  const terms = skillText.toLowerCase()
+    .split(/[,;\n•|]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 1 && s.length < 60);
+  terms.forEach((t, i) => {
+    // First skills listed get slightly higher weight
+    weights[t] = Math.max(5, 10 - Math.floor(i / 5));
+  });
+  return weights;
+}
+
+// Parse skills from the my-skills textarea whenever scoring
+function refreshSkillWeights() {
+  const el = document.getElementById('my-skills');
+  if (el && el.value.trim()) {
+    SKILL_WEIGHTS = buildSkillWeights(el.value);
+  }
+}
+
+const PORTALS = [
+  {name:"Naukri",     color:"#2563eb", build:(k,l)=>`https://www.naukri.com/${slug(k)}-jobs-in-${slug(l)}`},
+  {name:"LinkedIn",   color:"#0a66c2", build:(k,l)=>`https://www.linkedin.com/jobs/search/?keywords=${enc(k)}&location=${enc(l)}`},
+  {name:"Internshala",color:"#16a34a", build:(k,l)=>`https://internshala.com/jobs/${slug(k)}-jobs/`},
+  {name:"Foundit",    color:"#7c3aed", build:(k,l)=>`https://www.foundit.in/search/${slug(k)}-jobs-in-${slug(l)}`},
+  {name:"Indeed",     color:"#003a9b", build:(k,l)=>`https://in.indeed.com/jobs?q=${enc(k)}&l=${enc(l)}`},
+  {name:"Glassdoor",  color:"#0caa41", build:(k,l)=>`https://www.glassdoor.co.in/Job/jobs.htm?sc.keyword=${enc(k)}&locT=C&locName=${enc(l)}`},
+  {name:"Wellfound",  color:"#1f2937", build:(k,l)=>`https://wellfound.com/jobs?query=${enc(k)}`},
+  {name:"Shine",      color:"#dc2626", build:(k,l)=>`https://www.shine.com/job-search/${slug(k)}-jobs-in-${slug(l)}`},
+];
+
+function slug(s){ return s.trim().toLowerCase().replace(/\s+/g,'-'); }
+function enc(s){ return encodeURIComponent(s.trim()); }
+
+/* ═══════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════ */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab === 'tracker') renderTracker();
+  });
+});
+
+/* ═══════════════════════════════════════
+   TAB 1 — QUICK SEARCH PORTAL GRID
+   ═══════════════════════════════════════ */
+function buildPortalGrid(){
+  const grid = document.getElementById('portal-grid');
+  grid.innerHTML = PORTALS.map((p,i)=>`
+    <div class="portal-card">
+      <div class="portal-name"><span class="portal-dot" style="background:${p.color}"></span>${p.name}</div>
+      <div class="search-row">
+        <div class="ac-wrap" style="flex:1">
+          <input type="text" id="kw-${i}" placeholder="Job title" autocomplete="off"
+            oninput="acSuggest(this,'ac-pkw-${i}','JOB_TITLES')" onkeydown="acKeydown(event,'ac-pkw-${i}')" onblur="acBlur('ac-pkw-${i}')">
+          <div class="ac-dropdown" id="ac-pkw-${i}"></div>
+        </div>
+        <div class="ac-wrap" style="flex:1">
+          <input type="text" id="loc-${i}" placeholder="Location" autocomplete="off"
+            oninput="acSuggest(this,'ac-ploc-${i}','LOCATIONS')" onkeydown="acKeydown(event,'ac-ploc-${i}')" onblur="acBlur('ac-ploc-${i}')">
+          <div class="ac-dropdown" id="ac-ploc-${i}"></div>
+        </div>
+      </div>
+      <button class="go-btn" style="background:${p.color}" onclick="openPortal(${i})">Search on ${p.name} ↗</button>
+    </div>
+  `).join('');
+}
+
+function openPortal(i){
+  const kw  = document.getElementById('kw-'+i).value || 'Data Analyst';
+  const loc = document.getElementById('loc-'+i).value || 'India';
+  window.open(PORTALS[i].build(kw, loc), '_blank');
+}
+
+function openAllPortals(){
+  const kw  = document.getElementById('quick-keyword').value || 'Data Analyst';
+  const loc = document.getElementById('quick-location').value || 'Bengaluru';
+  PORTALS.forEach((p,i)=>{
+    document.getElementById('kw-'+i).value = kw;
+    document.getElementById('loc-'+i).value = loc;
+  });
+  PORTALS.forEach((p,idx)=> setTimeout(()=> window.open(p.build(kw, loc), '_blank'), idx*150) );
+}
+
+buildPortalGrid();
+
+/* ═══════════════════════════════════════
+   TAB 2 — PASTE & SCORE
+   ═══════════════════════════════════════ */
+function scoreJobs(){
+  refreshSkillWeights();
+  if(!Object.keys(SKILL_WEIGHTS).length){ alert('Please enter your skills above before scoring jobs'); return; }
+  const raw = document.getElementById('job-paste').value.trim();
+  if(!raw){ alert('Paste at least one job listing first'); return; }
+
+  // Split into blocks: by blank line, or by line if pipe-delimited
+  let blocks = raw.split(/\n\s*\n/).filter(b=>b.trim());
+  if(blocks.length === 1){
+    blocks = raw.split('\n').filter(l=>l.trim());
+  }
+
+  const scored = blocks.map(block => scoreOneJob(block));
+  scored.sort((a,b)=> b.score - a.score);
+
+  renderScoredResults(scored);
+}
+
+function scoreOneJob(text){
+  const lower = text.toLowerCase();
+  let score = 0;
+  let matchedSkills = [];
+  let totalWeight = 0;
+
+  for(const [skill, weight] of Object.entries(SKILL_WEIGHTS)){
+    totalWeight += weight;
+    if(lower.includes(skill)){
+      score += weight;
+      matchedSkills.push(skill);
+    }
+  }
+
+  // Normalize to 0-100, with a base floor so it's not harshly 0
+  let pct = Math.round((score / (totalWeight*0.35)) * 100); // *0.35 so matching ~35% of all skills = 100
+  pct = Math.min(100, Math.max(8, pct));
+
+  // Try to parse title/company/location from pipe-delimited format
+  const parts = text.split('|').map(p=>p.trim());
+  let title = parts[0] || text.slice(0,60);
+  let company = parts[1] || '';
+  let location = parts[2] || '';
+
+  // missing key skills (top 6 by weight not matched)
+  const missing = Object.entries(SKILL_WEIGHTS)
+    .sort((a,b)=>b[1]-a[1])
+    .filter(([s])=> !matchedSkills.includes(s))
+    .slice(0,4)
+    .map(([s])=>s);
+
+  let reason = matchedSkills.length
+    ? `Matches: ${matchedSkills.slice(0,5).join(', ')}`
+    : 'No strong keyword overlap found — review manually';
+
+  return {
+    title, company, location,
+    raw: text,
+    score: pct,
+    reason,
+    missing: missing.join(', ')
+  };
+}
+
+function renderScoredResults(jobs){
+  const container = document.getElementById('scored-results');
+  if(!jobs.length){ container.innerHTML=''; return; }
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-hdr">
+        <h2>${jobs.length} jobs scored</h2>
+        <p>Sorted by best match first — click Track to save, or Add all to save everything</p>
+      </div>
+      <div class="card-body">
+        <button class="btn-secondary" onclick="trackAllScored()">Track all ${jobs.length} jobs</button>
+        <div class="job-list" id="job-list-inner"></div>
+      </div>
+    </div>`;
+
+  const list = document.getElementById('job-list-inner');
+  window.__lastScored = jobs;
+
+  list.innerHTML = jobs.map((j,i)=>{
+    const cls = j.score>=65?'score-high':j.score>=40?'score-mid':'score-low';
+    return `
+      <div class="job-item">
+        <div class="score-badge ${cls}">${j.score}%</div>
+        <div class="job-info">
+          <div class="job-title">${escapeHtml(j.title)}</div>
+          <div class="job-company">${escapeHtml(j.company)} ${j.location?'· '+escapeHtml(j.location):''}</div>
+          <div class="job-reason">${escapeHtml(j.reason)}</div>
+          ${j.missing?`<div class="job-missing">Consider highlighting: ${escapeHtml(j.missing)}</div>`:''}
+        </div>
+        <div class="job-actions">
+          <button class="mini-btn" onclick="trackJob(${i})" id="track-btn-${i}">+ Track this</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function trackJob(i){
+  const job = window.__lastScored[i];
+  addToTracker(job.title, job.company, job.location, job.score, '', 'Saved');
+  const btn = document.getElementById('track-btn-'+i);
+  btn.textContent = '✓ Tracked';
+  btn.classList.add('applied');
+  btn.disabled = true;
+}
+
+function trackAllScored(){
+  if(!window.__lastScored) return;
+  window.__lastScored.forEach(j=> addToTracker(j.title, j.company, j.location, j.score, '', 'Saved'));
+  alert(`${window.__lastScored.length} jobs added to your tracker!`);
+  document.querySelectorAll('.mini-btn').forEach(b=>{ b.textContent='✓ Tracked'; b.classList.add('applied'); b.disabled=true; });
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ═══════════════════════════════════════
+   TAB 3 — TRACKER (localStorage based)
+   ═══════════════════════════════════════ */
+function getTracker(){
+  try{ return JSON.parse(localStorage.getItem('job_tracker') || '[]'); }
+  catch(e){ return []; }
+}
+function saveTracker(data){
+  localStorage.setItem('job_tracker', JSON.stringify(data));
+}
+
+function addToTracker(title, company, location, score, url, status){
+  const data = getTracker();
+  data.unshift({
+    id: Date.now() + Math.random(),
+    date: new Date().toISOString().slice(0,10),
+    title, company, location,
+    score: score || '',
+    url: url || '',
+    status: status || 'Saved'
+  });
+  saveTracker(data);
+}
+
+function renderTracker(){
+  const data = getTracker();
+  const search = (document.getElementById('tracker-search')?.value || '').toLowerCase();
+  const filtered = data.filter(j =>
+    !search || (j.title+j.company+j.location).toLowerCase().includes(search)
+  );
+
+  // Stats
+  const stats = document.getElementById('tracker-stats');
+  const counts = {Saved:0, Applied:0, Shortlisted:0, Interview:0, Rejected:0};
+  data.forEach(j=> counts[j.status] = (counts[j.status]||0)+1 );
+  stats.innerHTML = `
+    <div class="stat-box"><div class="sl">Total</div><div class="sv">${data.length}</div></div>
+    <div class="stat-box"><div class="sl">Applied</div><div class="sv">${counts.Applied||0}</div></div>
+    <div class="stat-box"><div class="sl">Interview</div><div class="sv">${counts.Interview||0}</div></div>
+    <div class="stat-box"><div class="sl">Saved</div><div class="sv">${counts.Saved||0}</div></div>
+  `;
+
+  const body = document.getElementById('tracker-body');
+  if(!filtered.length){
+    body.innerHTML = `<tr><td colspan="8" class="empty-msg">No jobs tracked yet. Score some jobs in the "Paste & score" tab and track them here.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(j => `
+    <tr>
+      <td>${j.date}</td>
+      <td><strong>${escapeHtml(j.title)}</strong></td>
+      <td>${escapeHtml(j.company)}</td>
+      <td>${escapeHtml(j.location)}</td>
+      <td>${j.score ? j.score+'%' : '—'}</td>
+      <td>
+        <select class="status-select" onchange="updateStatus('${j.id}', this.value)">
+          ${['Saved','Applied','Shortlisted','Interview','Rejected'].map(s=>
+            `<option value="${s}" ${s===j.status?'selected':''}>${s}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td>${j.url ? `<a href="${j.url}" target="_blank">Open ↗</a>` : '—'}</td>
+      <td><button class="del-btn" onclick="deleteTracked('${j.id}')">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateStatus(id, status){
+  const data = getTracker();
+  const job = data.find(j => j.id == id);
+  if(job){ job.status = status; saveTracker(data); renderTracker(); }
+}
+
+function deleteTracked(id){
+  let data = getTracker();
+  data = data.filter(j => j.id != id);
+  saveTracker(data);
+  renderTracker();
+}
+
+function clearTracker(){
+  if(confirm('Delete all tracked jobs? This cannot be undone.')){
+    localStorage.removeItem('job_tracker');
+    renderTracker();
+  }
+}
+
+function exportTrackerCSV(){
+  const data = getTracker();
+  if(!data.length){ alert('No jobs to export'); return; }
+  const headers = ['Date','Title','Company','Location','Match Score','Status','URL'];
+  const rows = [headers.join(',')];
+  data.forEach(j=>{
+    rows.push([j.date, `"${j.title}"`, `"${j.company}"`, `"${j.location}"`, j.score, j.status, j.url].join(','));
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'job_applications_tracker.csv';
+  a.click();
+}
+
+renderTracker();
+
+/* ═══════════════════════════════════════
+   TAB 4 — RESUME KEYWORD CHECKER
+   ═══════════════════════════════════════ */
+function extractKeywords(text){
+  return text.toLowerCase()
+    .split(/[,.\n;•\-]+/)
+    .map(s=>s.trim())
+    .filter(s=> s.length>2 && s.length<40);
+}
+
+function checkKeywords(){
+  const resumeText = document.getElementById('kw-resume').value;
+  const jdText = document.getElementById('kw-jd').value;
+  if(!resumeText.trim()){ alert('Paste your skills/resume keywords on the left first'); return; }
+  if(!jdText.trim()){ alert('Paste a job description on the right first'); return; }
+
+  const resumeLower = resumeText.toLowerCase();
+  const resumeKeywords = extractKeywords(resumeText);
+  const jdLower = jdText.toLowerCase();
+  const allCandidateTerms = [...new Set([...resumeKeywords])];
+
+  const found = [];
+  const missing = [];
+
+  allCandidateTerms.forEach(term=>{
+    if(jdLower.includes(term)){
+      if(resumeLower.includes(term)) found.push(term);
+      else missing.push(term);
+    }
+  });
+
+  const totalRelevant = found.length + missing.length;
+  const pct = totalRelevant ? Math.round((found.length/totalRelevant)*100) : 0;
+  const color = pct>=70?'#16a34a':pct>=40?'#d97706':'#dc2626';
+
+  const resultsDiv = document.getElementById('kw-results');
+  resultsDiv.innerHTML = `
+    <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid #e5e7eb">
+      <div class="match-pct-label" style="color:${color}">${pct}% match</div>
+      <div class="match-meter"><div class="match-meter-fill" style="width:${pct}%;background:${color}"></div></div>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:14px">${found.length} of ${totalRelevant} relevant keywords found in your resume</p>
+      <div style="margin-bottom:14px">
+        <strong style="font-size:13px">✓ Keywords you already have (${found.length})</strong><br>
+        ${found.length ? found.map(k=>`<span class="kw-tag kw-found">${escapeHtml(k)}</span>`).join('') : '<span style="font-size:12px;color:#9ca3af">None matched</span>'}
+      </div>
+      <div>
+        <strong style="font-size:13px">✗ Missing from your resume (${missing.length})</strong><br>
+        ${missing.length ? missing.map(k=>`<span class="kw-tag kw-missing">${escapeHtml(k)}</span>`).join('') : '<span style="font-size:12px;color:#9ca3af">Nothing missing — great match!</span>'}
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════
+   TAB 5 — DAILY CHECKLIST
+   ═══════════════════════════════════════ */
+function getDailyLog(){
+  try{ return JSON.parse(localStorage.getItem('daily_app_log') || '{}'); }
+  catch(e){ return {}; }
+}
+function saveDailyLog(log){
+  localStorage.setItem('daily_app_log', JSON.stringify(log));
+}
+function todayKey(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function quickAddApplication(){
+  const input = document.getElementById('quick-add-job');
+  const jobName = input.value.trim() || 'Application';
+  const log = getDailyLog();
+  const key = todayKey();
+  if(!log[key]) log[key] = [];
+  log[key].push({ name: jobName, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+  saveDailyLog(log);
+  input.value = '';
+  renderChecklist();
+}
+
+function removeLogEntry(idx){
+  const log = getDailyLog();
+  const key = todayKey();
+  if(log[key]) { log[key].splice(idx,1); saveDailyLog(log); }
+  renderChecklist();
+}
+
+function renderChecklist(){
+  const log = getDailyLog();
+  const key = todayKey();
+  const todayList = log[key] || [];
+  const goal = 10;
+  const count = todayList.length;
+  const pct = Math.min(100, Math.round((count/goal)*100));
+
+  document.getElementById('goal-bar-fill').style.width = pct+'%';
+  document.getElementById('goal-bar-text').textContent = `${count} / ${goal} today`;
+
+  const dates = Object.keys(log).sort().reverse();
+  let streak = 0;
+  for(let d of dates){
+    if((log[d]||[]).length >= goal) streak++;
+    else break;
+  }
+
+  const totalApplied = Object.values(log).reduce((s,arr)=> s + arr.length, 0);
+
+  document.getElementById('checklist-stats').innerHTML = `
+    <div class="stat-box"><div class="sl">Today</div><div class="sv">${count}</div></div>
+    <div class="stat-box"><div class="sl">Goal streak</div><div class="sv">${streak} day${streak!==1?'s':''}</div></div>
+    <div class="stat-box"><div class="sl">All-time total</div><div class="sv">${totalApplied}</div></div>
+  `;
+
+  document.getElementById('today-log').innerHTML = todayList.length ? `
+    <div style="margin-top:1rem">
+      <strong style="font-size:13px">Today's log</strong>
+      ${todayList.map((item,i)=>`
+        <div class="checklist-row">
+          <span style="flex:1;font-size:13px">${escapeHtml(item.name)}</span>
+          <span style="font-size:12px;color:#9ca3af">${item.time}</span>
+          <button class="del-btn" onclick="removeLogEntry(${i})">Remove</button>
+        </div>
+      `).join('')}
+    </div>` : `<p style="font-size:13px;color:#9ca3af;margin-top:1rem">No applications logged today yet.</p>`;
+
+  const last7 = [];
+  for(let i=0;i<7;i++){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const k = d.toISOString().slice(0,10);
+    last7.push({date:k, count:(log[k]||[]).length});
+  }
+  document.getElementById('week-log-body').innerHTML = last7.map(d=>`
+    <tr>
+      <td>${d.date}</td>
+      <td>${d.count}</td>
+      <td>${d.count>=goal ? '<span class="status-pill status-Applied">Yes</span>' : '<span class="status-pill status-Saved">No</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+renderChecklist();
+
+/* ═══════════════════════════════════════
+   TAB 6 — COVER LETTER GENERATOR
+   ═══════════════════════════════════════ */
+function generateCoverLetter(){
+  const title    = document.getElementById('cl-jobtitle').value.trim() || 'this position';
+  const company  = document.getElementById('cl-company').value.trim() || '[Company Name]';
+  const hr       = document.getElementById('cl-hrname').value.trim() || 'Hiring Manager';
+  const source   = document.getElementById('cl-source').value.trim() || 'your careers page';
+  const jd       = document.getElementById('cl-jd').value.trim();
+  const yourName = document.getElementById('cl-yourname').value.trim() || '[Your Name]';
+  const yourPhone= document.getElementById('cl-phone').value.trim() || '';
+  const yourEmail= document.getElementById('cl-email').value.trim() || '';
+  const expYears = document.getElementById('cl-exp').value.trim() || '1+';
+  const topSkills= document.getElementById('cl-topskills').value.trim() || 'my core skills';
+  const currentRole = document.getElementById('cl-currentrole').value.trim() || 'my current role';
+
+  // Match skills from JD against user's listed top skills
+  let highlightSkills = [];
+  if(jd && topSkills){
+    const jdLower = jd.toLowerCase();
+    topSkills.split(/[,;]+/).map(s=>s.trim().toLowerCase()).forEach(s=>{
+      if(s.length>1 && jdLower.includes(s)) highlightSkills.push(s);
+    });
+  }
+  const skillLine = highlightSkills.length
+    ? `In particular, I noticed this role values ${highlightSkills.slice(0,4).join(', ')} — areas where I have direct, hands-on experience.\n\n`
+    : '';
+
+  const letter = `Dear ${hr},
+
+I am writing to express my interest in the ${title} position at ${company}, which I found on ${source}. With ${expYears} year(s) of experience in ${currentRole}, I have developed strong expertise in ${topSkills}.
+
+${skillLine}I am confident that my background aligns well with what ${company} is looking for, and I would welcome the opportunity to contribute to your team. I have attached my resume for your review and am available for an interview at your convenience.
+
+Thank you for your time and consideration.
+
+Warm regards,
+${yourName}${yourPhone ? '\n' + yourPhone : ''}${yourEmail ? '\n' + yourEmail : ''}`;
+
+  const out = document.getElementById('cl-output');
+  out.style.display = 'block';
+  out.textContent = letter;
+  window.__lastCoverLetter = letter;
+}
+
+function copyCoverLetter(){
+  if(!window.__lastCoverLetter){ alert('Generate a cover letter first'); return; }
+  navigator.clipboard.writeText(window.__lastCoverLetter).then(()=>{
+    alert('Cover letter copied to clipboard!');
+  });
+}
+
+/* ═══════════════════════════════════════
+   TAB 7 — SALARY CALCULATOR
+   ═══════════════════════════════════════ */
+function estimateInHand(ctc, bonus, basicPct){
+  if(!ctc || ctc <= 0) return null;
+
+  const annualFixed = Math.max(0, ctc - bonus);
+  const basic = annualFixed * (basicPct/100);
+  const pf = Math.min(basic, 180000) * 0.12;
+  const employerPf = pf;
+  const grossAnnual = annualFixed - employerPf;
+
+  let taxableIncome = Math.max(0, grossAnnual - 75000);
+  let tax = 0;
+  const slabs = [
+    [400000, 0], [400000, 0.05], [400000, 0.10], [400000, 0.15],
+    [400000, 0.20], [400000, 0.25], [Infinity, 0.30]
+  ];
+  let remaining = taxableIncome;
+  for(const [slabAmt, rate] of slabs){
+    const amt = Math.min(remaining, slabAmt);
+    tax += amt * rate;
+    remaining -= amt;
+    if(remaining <= 0) break;
+  }
+  tax = Math.max(0, tax);
+  const cess = tax * 0.04;
+  const totalTax = tax + cess;
+
+  const professionalTax = 2400;
+  const annualInHand = grossAnnual - pf - totalTax - professionalTax;
+  const monthlyInHand = annualInHand / 12;
+
+  return {
+    ctc, bonus, annualFixed, basic, pf, grossAnnual,
+    tax: totalTax, professionalTax, annualInHand, monthlyInHand
+  };
+}
+
+function calcSalary(){
+  const aCtc   = parseFloat(document.getElementById('sal-a-ctc').value) || 0;
+  const aBonus = parseFloat(document.getElementById('sal-a-bonus').value) || 0;
+  const aBasic = parseFloat(document.getElementById('sal-a-basic').value) || 40;
+
+  const bCtc   = parseFloat(document.getElementById('sal-b-ctc').value) || 0;
+  const bBonus = parseFloat(document.getElementById('sal-b-bonus').value) || 0;
+  const bBasic = parseFloat(document.getElementById('sal-b-basic').value) || 40;
+
+  const a = estimateInHand(aCtc, aBonus, aBasic);
+  const b = bCtc>0 ? estimateInHand(bCtc, bBonus, bBasic) : null;
+
+  const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+
+  let html = '<div class="sal-grid" style="margin-top:1rem">';
+
+  if(a){
+    html += `
+      <div class="sal-result-card">
+        <h3>Offer A — estimated breakdown</h3>
+        <div class="sal-row"><span>Annual CTC</span><span>${fmt(a.ctc)}</span></div>
+        <div class="sal-row"><span>Basic salary</span><span>${fmt(a.basic)}</span></div>
+        <div class="sal-row"><span>PF deduction</span><span>-${fmt(a.pf)}</span></div>
+        <div class="sal-row"><span>Estimated tax + cess</span><span>-${fmt(a.tax)}</span></div>
+        <div class="sal-row"><span>Professional tax</span><span>-${fmt(a.professionalTax)}</span></div>
+        <div class="sal-row total"><span>Annual in-hand</span><span>${fmt(a.annualInHand)}</span></div>
+        <div class="sal-row total"><span>Monthly in-hand</span><span>${fmt(a.monthlyInHand)}</span></div>
+      </div>`;
+  } else {
+    html += `<div class="sal-result-card"><p style="font-size:13px;color:#9ca3af">Enter Offer A's CTC to see breakdown</p></div>`;
+  }
+
+  if(b){
+    const diff = b.annualInHand - a.annualInHand;
+    const diffClass = diff>=0 ? 'sal-compare-better' : 'sal-compare-worse';
+    const diffLabel = diff>=0 ? `+${fmt(diff)} more than A` : `${fmt(diff)} less than A`;
+    html += `
+      <div class="sal-result-card">
+        <h3>Offer B — estimated breakdown</h3>
+        <div class="sal-row"><span>Annual CTC</span><span>${fmt(b.ctc)}</span></div>
+        <div class="sal-row"><span>Basic salary</span><span>${fmt(b.basic)}</span></div>
+        <div class="sal-row"><span>PF deduction</span><span>-${fmt(b.pf)}</span></div>
+        <div class="sal-row"><span>Estimated tax + cess</span><span>-${fmt(b.tax)}</span></div>
+        <div class="sal-row"><span>Professional tax</span><span>-${fmt(b.professionalTax)}</span></div>
+        <div class="sal-row total"><span>Annual in-hand</span><span>${fmt(b.annualInHand)}</span></div>
+        <div class="sal-row total"><span>Monthly in-hand</span><span>${fmt(b.monthlyInHand)}</span></div>
+        <p class="${diffClass}" style="margin-top:8px;font-size:13px">${diffLabel}</p>
+      </div>`;
+  } else {
+    html += `<div class="sal-result-card"><p style="font-size:13px;color:#9ca3af">Enter Offer B's CTC to compare two offers side by side</p></div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('sal-results').innerHTML = html;
+}
+
+calcSalary();
+
+/* ═══════════════════════════════════════
+   AUTOCOMPLETE ENGINE
+   ═══════════════════════════════════════ */
+const JOB_TITLES = [
+  // Data / Analytics
+  "Data Analyst","Senior Data Analyst","Business Intelligence Analyst","BI Developer",
+  "Data Scientist","Data Engineer","ML Engineer","Machine Learning Engineer",
+  "Power BI Developer","Tableau Developer","MIS Analyst","Operations Analyst",
+  "Research Analyst","Market Research Analyst","Financial Analyst","Credit Analyst",
+  // Software / IT
+  "Software Engineer","Software Developer","Full Stack Developer","Frontend Developer",
+  "Backend Developer","React Developer","Node.js Developer","Python Developer",
+  "Java Developer","DevOps Engineer","Cloud Engineer","Azure Engineer","AWS Engineer",
+  "QA Engineer","Test Engineer","Cybersecurity Analyst","Network Engineer",
+  "IT Support Engineer","System Administrator","Database Administrator","SQL Developer",
+  "Android Developer","iOS Developer","Flutter Developer","UI/UX Designer",
+  // Marketing / Digital
+  "Digital Marketing Executive","SEO Analyst","SEO Executive","SEO Specialist",
+  "Social Media Manager","Content Writer","Copywriter","Performance Marketing Manager",
+  "Email Marketing Specialist","Growth Hacker","Brand Manager","Marketing Manager",
+  "PPC Specialist","Google Ads Specialist","E-commerce Manager",
+  // Sales / CRM / Business
+  "Sales Executive","Business Development Executive","Business Development Manager",
+  "CRM Executive","CRM Manager","Account Manager","Key Account Manager",
+  "Inside Sales Representative","Tele Sales Executive","Pre-Sales Consultant",
+  "Business Analyst","Product Manager","Product Owner","Scrum Master",
+  "Operations Manager","Operations Executive","Process Associate",
+  // Finance / Accounts
+  "Chartered Accountant","CA","Cost Accountant","Tax Consultant","Auditor",
+  "Accounts Executive","Accounts Manager","Finance Manager","CFO",
+  "Tally Operator","Bookkeeper","GST Consultant","Investment Analyst",
+  // HR / Admin
+  "HR Executive","HR Manager","HR Recruiter","Talent Acquisition Specialist",
+  "HRBP","HR Business Partner","Payroll Executive","Admin Executive",
+  "Office Manager","Recruitment Consultant","Training and Development Manager",
+  // Healthcare
+  "Staff Nurse","ICU Nurse","Nursing Assistant","Doctor","MBBS Doctor",
+  "Pharmacist","Physiotherapist","Lab Technician","Radiologist","Dentist",
+  "Medical Officer","Clinical Research Associate","Hospital Administrator",
+  // Education / Teaching
+  "Teacher","Primary Teacher","Secondary Teacher","PGT Teacher","TGT Teacher",
+  "Professor","Lecturer","Tutor","Academic Coordinator","School Principal",
+  "Training Coordinator","Instructional Designer","E-learning Developer",
+  // Engineering / Core
+  "Mechanical Engineer","Civil Engineer","Electrical Engineer","Electronics Engineer",
+  "Chemical Engineer","Structural Engineer","Project Engineer","Site Engineer",
+  "AutoCAD Designer","Design Engineer","Quality Engineer","Production Engineer",
+  "Safety Officer","EHS Officer","Maintenance Engineer","HVAC Engineer",
+  // Logistics / Supply Chain
+  "Supply Chain Manager","Logistics Coordinator","Warehouse Manager",
+  "Procurement Executive","Inventory Manager","Import Export Executive",
+  // Customer Service
+  "Customer Support Executive","Customer Service Representative",
+  "Call Center Agent","BPO Executive","Technical Support Executive",
+  "Chat Support Agent","Help Desk Analyst",
+  // Content / Media / Design
+  "Graphic Designer","Video Editor","Animator","Photographer","Journalist",
+  "Content Strategist","UX Researcher","Motion Designer",
+];
+
+const LOCATIONS = [
+  // Indian metros
+  "Bengaluru","Mumbai","Delhi","Hyderabad","Chennai","Pune","Kolkata",
+  "Ahmedabad","Jaipur","Surat","Lucknow","Kanpur","Nagpur","Indore",
+  "Thane","Bhopal","Visakhapatnam","Pimpri-Chinchwad","Patna","Vadodara",
+  "Ghaziabad","Ludhiana","Agra","Nashik","Ranchi","Faridabad","Meerut",
+  "Rajkot","Kalyan-Dombivli","Vasai-Virar","Varanasi","Srinagar","Amritsar",
+  "Allahabad","Dhanbad","Aurangabad","Coimbatore","Vijayawada","Guwahati",
+  "Chandigarh","Jodhpur","Madurai","Raipur","Kochi","Noida","Gurugram",
+  "Navi Mumbai","Mysuru","Bhubaneswar","Dehradun","Thiruvananthapuram",
+  // Maharashtra
+  "Parbhani","Nanded","Latur","Osmanabad","Solapur","Kolhapur","Sangli",
+  // Remote & hybrid
+  "Remote","Work From Home","WFH","Hybrid","Pan India","Anywhere in India",
+  // International
+  "Dubai","Abu Dhabi","Sharjah","Singapore","London","New York","Toronto","Sydney",
+];
+
+let acActiveIndex = {};
+
+function acSuggest(input, dropId, listName) {
+  const q = input.value.trim().toLowerCase();
+  const list = listName === 'JOB_TITLES' ? JOB_TITLES : LOCATIONS;
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+
+  if (q.length < 1) { acClose(dropId); return; }
+
+  const matches = list.filter(item =>
+    item.toLowerCase().includes(q)
+  ).slice(0, 10);
+
+  if (!matches.length) { acClose(dropId); return; }
+
+  acActiveIndex[dropId] = -1;
+  drop.innerHTML = matches.map((m, i) => {
+    const hl = m.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'),
+      match => `<span class="ac-highlight">${match}</span>`);
+    return `<div class="ac-item" data-i="${i}" data-val="${m}"
+      onmousedown="acPick('${dropId}','${m}',event)">${hl}</div>`;
+  }).join('');
+  drop.classList.add('open');
+}
+
+function acPick(dropId, val, e) {
+  if (e) e.preventDefault();
+  // find input sibling
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  const wrap = drop.parentElement;
+  const inp = wrap.querySelector('input');
+  if (inp) inp.value = val;
+  acClose(dropId);
+  // sync quick-bar inputs with portal cards when quick-bar is used
+  if (dropId === 'ac-qkw') document.getElementById('quick-keyword').value = val;
+  if (dropId === 'ac-qloc') document.getElementById('quick-location').value = val;
+}
+
+function acClose(dropId) {
+  const drop = document.getElementById(dropId);
+  if (drop) { drop.classList.remove('open'); drop.innerHTML = ''; }
+  acActiveIndex[dropId] = -1;
+}
+
+function acBlur(dropId) {
+  setTimeout(() => acClose(dropId), 180);
+}
+
+function acKeydown(e, dropId) {
+  const drop = document.getElementById(dropId);
+  if (!drop || !drop.classList.contains('open')) return;
+  const items = drop.querySelectorAll('.ac-item');
+  let idx = acActiveIndex[dropId] ?? -1;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    idx = Math.min(idx + 1, items.length - 1);
+    acActiveIndex[dropId] = idx;
+    items.forEach((el, i) => el.classList.toggle('active', i === idx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    idx = Math.max(idx - 1, 0);
+    acActiveIndex[dropId] = idx;
+    items.forEach((el, i) => el.classList.toggle('active', i === idx));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (idx >= 0 && items[idx]) {
+      const val = items[idx].dataset.val;
+      acPick(dropId, val, null);
+      const wrap = document.getElementById(dropId).parentElement;
+      const inp = wrap.querySelector('input');
+      if (inp) inp.focus();
+    }
+  } else if (e.key === 'Escape') {
+    acClose(dropId);
+  }
+}
+
+</script>
+</body>
+</html>
